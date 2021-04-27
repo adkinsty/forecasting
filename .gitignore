@@ -1,0 +1,8 @@
+*.rds
+**/extra/**
+extra
+literature
+materials/Study\ IV/
+notes
+materials/MTurk
+drafts

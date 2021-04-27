@@ -1,0 +1,28 @@
+ Family: gamma 
+  Links: mu = log; shape = identity 
+Formula: z_est ~ 1 + day * group + (1 | state_id) 
+   Data: dat %>% filter(exp == 1) (Number of observations: 1597) 
+Samples: 4 chains, each with iter = 1e+05; warmup = 50000; thin = 10;
+         total post-warmup samples = 20000
+
+Group-Level Effects: 
+~state_id (Number of levels: 47) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     0.13      0.03     0.08     0.18 1.00    19605    20054
+
+Population-Level Effects: 
+                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept           -1.78      0.03    -1.84    -1.74 1.00    19079    19960
+day2M1               0.36      0.03     0.31     0.42 1.00    20619    18962
+day3M2               0.27      0.03     0.21     0.32 1.00    20512    20221
+grouptaMg            0.04      0.02    -0.00     0.09 1.00    20262    20227
+day2M1:grouptaMg     0.13      0.06     0.02     0.25 1.00    20459    19179
+day3M2:grouptaMg    -0.01      0.06    -0.13     0.10 1.00    20053    19751
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+shape     4.43      0.15     4.14     4.74 1.00    19221    19632
+
+Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).

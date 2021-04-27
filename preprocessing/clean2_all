@@ -1,0 +1,214 @@
+library(tidyverse)
+library(tidyselect)
+
+setwd("/Users/adkinsty/Box/side_projects/covid/Forecasting/")
+
+data_input = read.csv(file = "data/raw_data/raw_data_study2_all.csv")
+
+num_center <- 3.5
+risk_center <- 4
+
+data_renamed = data_input %>%
+  mutate(id = 1:n(),
+         total_time = data_input$`Duration (in seconds)`) %>%
+  rowwise() %>%
+  mutate(
+    trump = trump_approval_1,
+    fox = ifelse(news == 3, 1, 0),
+    president = Q129,
+    effort = as.numeric(Effort_1),
+    attention = Q122_7,
+    start_en = Q165,
+    prim_lng = Q166,
+    group_id = ifelse(!is.na(Confirm_case_est_1),"t",
+                      ifelse(!is.na(Q252_1),"ta","g")),
+    
+    cCases_1_est_ta = as.numeric(gsub(",","",x =Q252_1)),
+    cCases_2_est_ta = as.numeric(gsub(",","",x =Q252_2)),
+    cCases_3_est_ta = as.numeric(gsub(",","",x =Q252_3)),
+    cCases_1_conf_ta = Q253_1,
+    cCases_2_conf_ta = Q253_2,
+    cCases_3_conf_ta = Q253_3,
+    aCases_1_est_ta = as.numeric(gsub(",","",x =Q255_1)),
+    aCases_2_est_ta = as.numeric(gsub(",","",x =Q255_2)),
+    aCases_3_est_ta = as.numeric(gsub(",","",x =Q255_3)),
+    aCases_1_conf_ta = Q256_1,
+    aCases_2_conf_ta = Q256_2,
+    aCases_3_conf_ta = Q256_3,
+    deaths_1_est_ta = as.numeric(gsub(",","",x =Q257_2)),
+    deaths_2_est_ta = as.numeric(gsub(",","",x =Q257_3)),
+    deaths_3_est_ta = as.numeric(gsub(",","",x =Q257_4)),
+    deaths_1_conf_ta = Q258_1,
+    deaths_2_conf_ta = Q258_2,
+    deaths_3_conf_ta = Q258_3,
+    
+    cCases_1_est_g = as.numeric(gsub(",","",x =Q261_1)),
+    cCases_2_est_g = as.numeric(gsub(",","",x =Q261_2)),
+    cCases_3_est_g = as.numeric(gsub(",","",x =Q261_3)),
+    cCases_1_conf_g = Q262_1,
+    cCases_2_conf_g = Q262_2,
+    cCases_3_conf_g = Q262_3,
+    aCases_1_est_g = as.numeric(gsub(",","",x =Q264_1)),
+    aCases_2_est_g = as.numeric(gsub(",","",x =Q264_2)),
+    aCases_3_est_g = as.numeric(gsub(",","",x =Q264_3)),
+    aCases_1_conf_g = Q265_1,
+    aCases_2_conf_g = Q265_2,
+    aCases_3_conf_g = Q265_3,
+    deaths_1_est_g = as.numeric(gsub(",","",x =Q266_2)),
+    deaths_2_est_g = as.numeric(gsub(",","",x =Q266_3)),
+    deaths_3_est_g = as.numeric(gsub(",","",x =Q266_4)),
+    deaths_1_conf_g = Q267_1,
+    deaths_2_conf_g = Q267_2,
+    deaths_3_conf_g = Q267_3,
+    rt_t = `Q155_Page.Submit`,
+    rt_ta = `Q156_Page.Submit`,
+    rt_g = `Q157_Page.Submit`,
+    prob_of_case = prob_of_contract_1,
+    prob_of_hosp = Q133_1,
+    prob_of_death = Q132_1,
+    time_to_stop_dist = Q167_1,
+    max_new_cases = as.numeric(gsub(",","",x =Q168)),
+    know_someone = ifelse(know_someone==2,0,1),
+    zip = as.numeric(Zip_Code),
+    age = as.numeric(Age),
+    age_bin = ifelse(age > 60, 'old', ifelse(age < 30, 'young', 'middle')),
+    edu = Ed_Level,
+    edu_mom = Ed_Level_Mom,
+    gen_health = ifelse(general_health_1=="Very Good",5,
+                        ifelse(general_health_1 == "Quite Good",4,
+                               ifelse(general_health_1=="Neither good nor poor",3,
+                                      ifelse(general_health_1=="Quite Poor",2,1)))),
+    gen_anxiety = ifelse(gen_anxiety_1=="Nearly every day",4,
+                         ifelse(gen_anxiety_1=="More than half the days",3,
+                                ifelse(gen_anxiety_1=="Several days",2,1))),        
+    cons1 = as.numeric(Conserv_scale_1), 
+    cons2 = -as.numeric(Conserv_scale_2), 
+    cons3 = -as.numeric(Conserv_scale_3), 
+    cons4 = as.numeric(Conserv_scale_4),
+    cons5 = -as.numeric(Conserv_scale_5), 
+    cons6 = as.numeric(Conserv_scale_6),
+    cons7 = as.numeric(Conserv_scale_7),
+    # mean-center risk aversion
+    risk1 = as.numeric(substr(Q122_1,1,1)) - risk_center,
+    risk2=as.numeric(substr(Q122_2,1,1)) - risk_center,
+    risk3=as.numeric(substr(Q122_3,1,1)) - risk_center,
+    risk4=as.numeric(substr(Q122_4,1,1)) - risk_center,
+    risk5= -(as.numeric(substr(Q122_5,1,1)) - risk_center),
+    risk6=as.numeric(substr(Q122_6,1,1)) - risk_center,
+    # mean-center numeracy scores
+    num1 = as.numeric(substr(Numeracy_1,1,1)) - num_center,
+    num2=as.numeric(substr(Numeracy_2,1,1))- num_center,
+    num3=as.numeric(substr(Numeracy_3,1,1))-num_center,
+    num4=as.numeric(substr(Numeracy_4,1,1))- num_center, 
+    num5=as.numeric(substr(Q124_1,1,1))- num_center, 
+    num6=as.numeric(substr(Q125_1,1,1))-num_center,
+    num7= -(as.numeric(substr(Q126_1,1,1))-num_center), 
+    num8=as.numeric(substr(Q127_1,1,1))-num_center,
+    # composite scores
+    conserv_mu = mean(c(cons1,cons2,cons3,cons4,cons5,cons6,cons7),na.rm=T),
+    risk_mu = mean(c(risk1,risk2,risk3,risk4,risk5,risk6),na.rm=T),
+    num_mu = mean(c(num1,num2,num3,num4, num5,num6,num7,num8))) %>% ungroup() %>%
+  mutate(cCases_1_est = ifelse(group_id=="ta",cCases_1_est_ta,cCases_1_est_g),
+         cCases_2_est = ifelse(group_id=="ta",cCases_2_est_ta,cCases_2_est_g),
+         cCases_3_est = ifelse(group_id=="ta",cCases_3_est_ta,cCases_3_est_g),
+         aCases_1_est = ifelse(group_id=="ta",aCases_1_est_ta,aCases_1_est_g),
+         aCases_2_est = ifelse(group_id=="ta",aCases_2_est_ta,aCases_2_est_g),
+         aCases_3_est = ifelse(group_id=="ta",aCases_3_est_ta,aCases_3_est_g),
+         deaths_1_est = ifelse(group_id=="ta",deaths_1_est_ta,deaths_1_est_g),
+         deaths_2_est = ifelse(group_id=="ta",deaths_2_est_ta,deaths_2_est_g),
+         deaths_3_est = ifelse(group_id=="ta",deaths_3_est_ta,deaths_3_est_g),
+         cCases_1_conf = ifelse(group_id=="ta",cCases_1_conf_ta,cCases_1_conf_g),
+         cCases_2_conf = ifelse(group_id=="ta",cCases_2_conf_ta,cCases_2_conf_g),
+         cCases_3_conf = ifelse(group_id=="ta",cCases_3_conf_ta,cCases_3_conf_g),
+         aCases_1_conf = ifelse(group_id=="ta",aCases_1_conf_ta,aCases_1_conf_g),
+         aCases_2_conf = ifelse(group_id=="ta",aCases_2_conf_ta,aCases_2_conf_g),
+         aCases_3_conf = ifelse(group_id=="ta",aCases_3_conf_ta,aCases_3_conf_g),
+         deaths_1_conf = ifelse(group_id=="ta",deaths_1_conf_ta,deaths_1_conf_g),
+         deaths_2_conf = ifelse(group_id=="ta",deaths_2_conf_ta,deaths_2_conf_g),
+         deaths_3_conf = ifelse(group_id=="ta",deaths_3_conf_ta,deaths_3_conf_g),
+         rt = ifelse(group_id=="ta",rt_ta,rt_g))
+
+
+data_select = data_renamed %>%
+  dplyr::select(
+    Finished,id,age,age_bin,MTurk_ID,group_id,zip,president,attention,effort,
+    cCases_1_est,cCases_2_est,cCases_3_est,
+    cCases_1_conf,cCases_2_conf,cCases_3_conf,
+    aCases_1_est,aCases_2_est,aCases_3_est,
+    aCases_1_conf,aCases_2_conf,aCases_3_conf,
+    deaths_1_est,deaths_2_est,deaths_3_est,
+    deaths_1_conf,deaths_2_conf,deaths_3_conf,
+    rt,new,
+    past_social_iso_1,futur_social_iso_1, time_to_stop_dist) %>%
+  filter(group_id !='t') %>%
+  filter(Finished == 1) %>%
+  mutate(lb = 393782) %>%
+  mutate(decrease = lb > cCases_1_est | 
+           cCases_1_est > cCases_2_est | cCases_2_est > cCases_3_est |
+           aCases_1_est > aCases_2_est | aCases_2_est > aCases_3_est |
+           deaths_1_est > deaths_2_est | deaths_2_est > deaths_3_est)
+
+data_long_est = data_select %>%
+  pivot_longer(
+    cols = c("cCases_1_est","cCases_2_est","cCases_3_est","aCases_1_est","aCases_2_est","aCases_3_est","deaths_1_est","deaths_2_est","deaths_3_est"),
+    names_to = c("outcome","day"),
+    names_pattern = "(.*)_(.*)_est",
+    values_to = "estimate")
+data_long_conf = data_select %>%
+  pivot_longer(
+    cols = c("cCases_1_conf","cCases_2_conf","cCases_3_conf","aCases_1_conf","aCases_2_conf","aCases_3_conf","deaths_1_conf","deaths_2_conf","deaths_3_conf"),
+    names_to = c("outcome","day"),
+    names_pattern = "(.*)_(.*)_conf",
+    values_to = "confidence")
+data_long = data_long_est %>%
+  cbind(data_long_conf[c('confidence')])
+
+write_csv(data_long,"data/prepped/data_long_study2_all.csv")
+
+zip_data <- read.csv("data/extra/loc/uszips.csv") %>% dplyr::select(c(zip,state_id))
+
+# filtered_wide = data_select %>%
+#   mutate(lb = 393782) %>%
+#   mutate(N = n()) %>%
+#   filter(age > 18) %>%
+#   mutate(N1 = n()) %>%
+#   merge(zip_data,by="zip") %>%
+#   mutate(N2 = n()) %>%
+#   filter(!(decrease)) %>%
+#   mutate(N3 = n()) %>%
+#   filter(attention == 6) %>%
+#   mutate(N4 = n()) %>%
+#   filter(grepl("trump",president,ignore.case = TRUE) |
+#            grepl("don",president,ignore.case = TRUE)) %>%
+#   mutate(N5 = n()) %>%
+#   filter(effort > 5) %>%
+#   mutate(N6 = n()) %>%
+#   filter(as.numeric(rt) > 30) %>%
+#   mutate(N7 = n())
+
+# data_long_est = filtered_wide %>%
+#   pivot_longer(
+#     cols = c("cCases_1_est","cCases_2_est","cCases_3_est"),
+#     names_to = c("outcome","day"),
+#     names_pattern = "(.*)_(.*)_est",
+#     values_to = "estimate")
+# data_long_conf = filtered_wide %>%
+#   pivot_longer(
+#     cols = c("cCases_1_conf","cCases_2_conf","cCases_3_conf"),
+#     names_to = c("outcome","day"),
+#     names_pattern = "(.*)_(.*)_conf",
+#     values_to = "confidence")
+# data_long = data_long_est %>% cbind(data_long_conf['confidence'])
+
+# filtered_long = data_long %>%
+#   mutate(N7.5 = n()) %>%
+#   filter(estimate <= lb*10) %>%
+#   mutate(N8 = n(),
+#          N9 = length(unique(id)))
+# filtered_long %>% dplyr::select(contains("N",F))
+
+# filtered_long %>% group_by(group_id) %>% summarise(n=length(unique(id)))
+# filtered_long %>% group_by(new) %>% summarise(n=length(unique(id)))
+
+
+
